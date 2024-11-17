@@ -14,6 +14,9 @@ using InternshipV1.Web.Extensions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Hangfire;
+using InternshipV1.Service.Helper;
+using InternshipV1.Service.NewsLetterService;
 
 namespace InternshipV1.Web
 {
@@ -38,10 +41,21 @@ namespace InternshipV1.Web
             });
 
 
+            builder.Services.AddHangfire(options =>
+                       options
+                       //.UseSimpleAssemblyNameTypeSerializer()
+                       //.UseRecommendedSerializerSettings()
+                       .UseSqlServerStorage(builder.Configuration.GetConnectionString("HangfireConnection")));
+
+            builder.Services.AddHangfireServer();
+
+
             builder.Services.AddScoped<IproductRepository, productRepository>();
             builder.Services.AddScoped<IProductService, ProductService>();
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped<ITokenService, TokenService>();
+            builder.Services.AddScoped<IEmailService, EmailService>();
+            builder.Services.AddScoped<INewsLetterService, NewsLetterService>();
             builder.Services.AddAutoMapper(typeof(ProductProfile));
 
             builder.Services.AddIdentity<IdentityUser, IdentityRole>()
@@ -106,6 +120,9 @@ namespace InternshipV1.Web
 
             app.UseAuthentication();
             app.UseAuthorization();
+
+            app.UseHangfireDashboard();
+            app.UseHangfireServer();
 
 
             app.MapControllers();
